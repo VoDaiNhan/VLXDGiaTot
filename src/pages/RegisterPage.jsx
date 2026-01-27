@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { SignUp } from '@clerk/clerk-react'
 import Layout from '../components/Layout'
 import { isClerkConfigured, useCurrentUser } from '../lib/auth'
@@ -8,14 +8,16 @@ import { Home, ChevronRight, UserPlus, Mail, Lock, User, Phone, Eye, EyeOff } fr
 const RegisterPage = () => {
   const navigate = useNavigate()
   const { isSignedIn } = useCurrentUser()
+  const [searchParams] = useSearchParams()
   const [showPassword, setShowPassword] = React.useState(false)
 
   // Redirect if already signed in
   React.useEffect(() => {
     if (isSignedIn) {
-      navigate('/account')
+      const redirect = searchParams.get('redirect')
+      navigate(redirect || '/account')
     }
-  }, [isSignedIn, navigate])
+  }, [isSignedIn, navigate, searchParams])
 
   // If Clerk is configured, use Clerk's SignUp component
   if (isClerkConfigured()) {
@@ -38,7 +40,7 @@ const RegisterPage = () => {
             routing="path" 
             path="/register"
             signInUrl="/login"
-            afterSignUpUrl="/account"
+            afterSignUpUrl={searchParams.get('redirect') || "/account"}
           />
         </section>
       </Layout>

@@ -2,13 +2,15 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useCart } from '../context/CartContext'
+import { useCurrentUser } from '../lib/auth'
 import { 
   Home, ChevronRight, Trash2, Minus, Plus, 
-  ShoppingBag, Tag, Truck, ShieldCheck, ArrowRight, Loader2
+  ShoppingBag, Tag, Truck, ShieldCheck, ArrowRight, Loader2, LogIn
 } from 'lucide-react'
 
 const CartPage = () => {
   const { cartItems, loading, updateQuantity, removeFromCart, subtotal } = useCart();
+  const { isSignedIn } = useCurrentUser();
   const shipping = subtotal > 500000 ? 0 : 30000;
   const total = subtotal + shipping;
 
@@ -180,10 +182,17 @@ const CartPage = () => {
                   <span className="text-2xl font-bold text-primary-red">{Number(total).toLocaleString('vi-VN')}đ</span>
                 </div>
 
-                <Link to="/checkout" className="btn btn--primary w-full h-14 text-base">
-                  Tiến hành thanh toán
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
+                {isSignedIn ? (
+                  <Link to="/checkout" className="btn btn--primary w-full h-14 text-base">
+                    Tiến hành thanh toán
+                    <ArrowRight className="w-5 h-5" />
+                  </Link>
+                ) : (
+                  <Link to={`/login?redirect=/checkout`} className="btn btn--primary w-full h-14 text-base">
+                    Đăng nhập để thanh toán
+                    <LogIn className="w-5 h-5" />
+                  </Link>
+                )}
 
                 {/* Trust Badges */}
                 <div className="mt-6 pt-6 border-t border-border-color grid grid-cols-2 gap-4">
