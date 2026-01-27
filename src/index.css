@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-red: #d32f2f;
+  --navy-blue: #002060;
+  --light-gray: #f5f5f5;
+  --gray-text: #4a4a4a;
+  --light-text: #757575;
+  --dark-text: #212121;
+  --border-color: #eeeeee;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--light-gray);
+  color: var(--dark-text);
+  font-family:
+    "IBM Plex Sans",
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+/* Custom class for buttons to keep consistency */
+.btn {
+  @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2;
+}
+
+.btn--primary {
+  @apply bg-primary-red text-white hover:bg-[#b71c1c] active:scale-95;
+}
+
+.btn--outline {
+  @apply border border-border-color bg-white text-gray-text hover:border-primary-red hover:text-primary-red;
+}
+
+/* Clerk UserProfile customization */
+.clerk-user-profile-wrapper .cl-card {
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.clerk-user-profile-wrapper .cl-navbar {
+  display: none !important;
+}
+
+.clerk-user-profile-wrapper .cl-headerSubtitle {
+  color: var(--light-text);
+}
