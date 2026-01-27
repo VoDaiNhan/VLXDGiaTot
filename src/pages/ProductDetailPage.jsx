@@ -18,17 +18,15 @@ const ProductDetailPage = () => {
   const [qty, setQty] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   const [product, setProduct] = useState(null);
-  const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProduct = async () => {
       try {
-        setLoading(true);
-        // 1. Fetch main product
+        // Try to fetch from DB
         const res = await sql`SELECT * FROM products WHERE id = ${id} LIMIT 1`;
-        
         if (res && res.length > 0) {
+          // Normalize DB product to the camelCase format expected by the UI
           const p = res[0];
           setProduct({
             ...p,
@@ -39,36 +37,21 @@ const ProductDetailPage = () => {
             isSale: p.is_sale,
             badge: p.badge || (p.is_new ? 'Mới' : p.is_sale ? 'Sale' : null)
           });
-
-          // 2. Fetch related products (same category, excluding current)
-          const relatedRes = await sql`
-            SELECT * FROM products 
-            WHERE category = ${p.category} AND id != ${id} 
-            ORDER BY RANDOM() 
-            LIMIT 4
-          `;
-          
-          if (relatedRes.length > 0) {
-            setRelatedProducts(relatedRes);
-          } else {
-            // Fallback if no same category
-            const fallbackRes = await sql`SELECT * FROM products WHERE id != ${id} LIMIT 4`;
-            setRelatedProducts(fallbackRes);
-          }
         } else {
-          // Static fallback
+          // Fallback to static data if not in DB
           const staticProduct = products.find(p => p.id === parseInt(id));
           setProduct(staticProduct || products[0]);
         }
       } catch (error) {
-        console.error('Error fetching data from DB:', error);
+        console.error('Error fetching product from DB:', error);
+        // Fallback to static
         const staticProduct = products.find(p => p.id === parseInt(id));
         setProduct(staticProduct || products[0]);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchProduct();
   }, [id]);
 
   if (loading) {
@@ -274,11 +257,7 @@ const ProductDetailPage = () => {
             SẢN PHẨM LIÊN QUAN
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {relatedProducts.length > 0 ? (
-              relatedProducts.map(p => <ProductCard key={p.id} product={p} />)
-            ) : (
-              products.slice(0, 4).map(p => <ProductCard key={p.id} product={p} />)
-            )}
+            {products.slice(0, 4).map(p => <ProductCard key={p.id} product={p} />)}
           </div>
         </section>
       </div>
