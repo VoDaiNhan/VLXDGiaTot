@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
+import sql from '../lib/db'
 import { 
   Star, Heart, ShoppingCart, Truck, ShieldCheck, 
   RotateCcw, Home, ChevronRight, Minus, Plus, 
@@ -9,14 +10,61 @@ import { products } from '../data/products'
 import ProductCard from '../components/ProductCard'
 import { Link, useParams } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { Loader2 } from 'lucide-react'
 
 const ProductDetailPage = () => {
   const { addToCart } = useCart();
   const { id } = useParams();
   const [qty, setQty] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
-  
-  const product = products.find(p => p.id === parseInt(id)) || products[0];
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        // Try to fetch from DB
+        const res = await sql`SELECT * FROM products WHERE id = ${id} LIMIT 1`;
+        if (res && res.length > 0) {
+          // Normalize DB product to the camelCase format expected by the UI
+          const p = res[0];
+          setProduct({
+            ...p,
+            salePrice: p.sale_price,
+            originalPrice: p.price,
+            image: p.image || (p.images && p.images[0]),
+            isNew: p.is_new,
+            isSale: p.is_sale,
+            badge: p.badge || (p.is_new ? 'Mới' : p.is_sale ? 'Sale' : null)
+          });
+        } else {
+          // Fallback to static data if not in DB
+          const staticProduct = products.find(p => p.id === parseInt(id));
+          setProduct(staticProduct || products[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching product from DB:', error);
+        // Fallback to static
+        const staticProduct = products.find(p => p.id === parseInt(id));
+        setProduct(staticProduct || products[0]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-10 h-10 animate-spin text-primary-red" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!product) return null;
 
 
   return (
