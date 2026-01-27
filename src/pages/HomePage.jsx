@@ -9,11 +9,13 @@ import {
   Mountain, Warehouse, Flame, MessageCircle, 
   CheckCircle2, Loader2
 } from 'lucide-react'
+import { projects as projectsData, projectCategories } from '../data/projects'
 
 const HomePage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeProjectTab, setActiveProjectTab] = useState('Nhà phố');
 
   const slides = [
     {
@@ -92,12 +94,7 @@ const HomePage = () => {
     { name: 'Vật Liệu Lợp', icon: Warehouse, count: 78 },
   ];
 
-  const projects = [
-    { title: 'Nhà Phố Hiện Đại 3 Tầng', loc: 'Quận 7, TP.HCM', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600' },
-    { title: 'Biệt Thự Sân Vườn', loc: 'Thủ Đức, TP.HCM', img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600' },
-    { title: 'Căn Hộ Cao Cấp', loc: 'Quận 2, TP.HCM', img: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600' },
-    { title: 'Nhà Phố Tân Cổ Điển', loc: 'Bình Thạnh, TP.HCM', img: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600' },
-  ];
+  const filteredProjects = projectsData.filter(p => p.category === activeProjectTab);
 
 
 
@@ -259,22 +256,26 @@ const HomePage = () => {
         </div>
 
         <div className="flex justify-center gap-4 mb-12">
-          {['Nhà phố', 'Biệt thự', 'Công trình', 'Khác'].map((tab, i) => (
-            <button key={i} className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${i === 0 ? 'bg-primary-red text-white' : 'bg-white text-gray-text hover:bg-gray-100'}`}>
+          {projectCategories.map((tab, i) => (
+            <button 
+              key={i} 
+              onClick={() => setActiveProjectTab(tab)}
+              className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeProjectTab === tab ? 'bg-primary-red text-white' : 'bg-white text-gray-text hover:bg-gray-100'}`}
+            >
               {tab}
             </button>
           ))}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {projects.map((proj, i) => (
-            <div key={i} className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer">
-              <img src={proj.img} alt={proj.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+          {filteredProjects.map((proj) => (
+            <Link key={proj.id} to={`/project/${proj.id}`} className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer">
+              <img src={proj.thumbnail} alt={proj.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
                 <h3 className="text-white font-bold mb-1">{proj.title}</h3>
-                <p className="text-white/60 text-xs">{proj.loc}</p>
+                <p className="text-white/60 text-xs">{proj.location}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
