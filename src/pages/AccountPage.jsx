@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useUser, UserProfile } from '@clerk/clerk-react'
 import Layout from '../components/Layout'
 import { useCurrentUser, useAuthActions, isClerkConfigured } from '../lib/auth'
@@ -11,6 +11,7 @@ import {
 
 const AccountPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isSignedIn, isLoaded, user: currentUser } = useCurrentUser();
   const { signOut } = useAuthActions();
   const clerkConfigured = isClerkConfigured();
@@ -25,7 +26,21 @@ const AccountPage = () => {
   }
   
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
+  // Default to profile, unless URL says otherwise
+  const [activeTab, setActiveTab] = useState(() => {
+    if (location.pathname.includes('/security')) return 'settings';
+    return 'profile';
+  });
+
+  // Handle tab switching with routing
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    if (tabId === 'settings') {
+      navigate('/account/security');
+    } else {
+      navigate('/account');
+    }
+  };
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -203,7 +218,7 @@ const AccountPage = () => {
                   ) : (
                     <button 
                       key={item.id}
-                      onClick={() => setActiveTab(item.id)}
+                      onClick={() => handleTabChange(item.id)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-colors ${
                         activeTab === item.id 
                           ? 'bg-primary-red/10 text-primary-red' 
@@ -398,8 +413,6 @@ const AccountPage = () => {
                         elements: {
                           rootBox: "w-full",
                           card: "w-full shadow-none p-0",
-                          navbar: "hidden", 
-                          navbarMobileMenuButton: "hidden",
                           headerTitle: "text-xl font-bold text-dark-text",
                           headerSubtitle: "text-sm text-light-text",
                         }

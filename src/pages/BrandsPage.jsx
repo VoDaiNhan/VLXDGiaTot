@@ -2,30 +2,15 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { brands } from '../data/brands'
-import { products } from '../data/products'
-import { Home, ChevronRight, ArrowRight, Award, Package, Star } from 'lucide-react'
+import { Building2, ArrowRight, Award, ChevronRight, Home } from 'lucide-react'
 
 const BrandsPage = () => {
-  // Calculate actual product count per brand from products data
-  const getBrandProductCount = (brandName) => {
-    return products.filter(p => p.brand === brandName).length;
-  };
-
   return (
     <Layout>
       {/* Page Header */}
-      <section className="bg-navy-blue py-16 px-4 lg:px-16 text-center text-white relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-64 h-64 bg-primary-red/10 rounded-full blur-3xl -ml-32 -mt-32"></div>
-        <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mb-32"></div>
-        
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 text-white/80 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
-            <Award className="w-4 h-4" />
-            Đối tác uy tín
-          </div>
-          <h1 className="text-4xl lg:text-5xl font-bold mb-4">THƯƠNG HIỆU ĐỐI TÁC</h1>
-          <p className="text-white/60 max-w-xl mx-auto">Hợp tác cùng các thương hiệu vật liệu xây dựng hàng đầu Việt Nam và quốc tế</p>
-        </div>
+      <section className="bg-navy-blue py-12 px-4 lg:px-16 text-center text-white">
+        <h1 className="text-4xl font-bold mb-4">Thương Hiệu Đối Tác</h1>
+        <p className="text-white/60">Danh sách các nhà cung cấp vật liệu xây dựng uy tín hàng đầu</p>
       </section>
 
       {/* Breadcrumb */}
@@ -41,62 +26,38 @@ const BrandsPage = () => {
       </nav>
 
       {/* Brands Grid */}
-      <section className="py-16 px-4 lg:px-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {brands.map((brand) => {
-            const productCount = getBrandProductCount(brand.name);
-            return (
-              <Link 
-                key={brand.id} 
-                to={`/brand/${brand.name}`}
-                className="group bg-white rounded-2xl shadow-sm border border-transparent hover:border-primary-red hover:shadow-lg transition-all duration-300 overflow-hidden"
-              >
-                {/* Logo Area */}
-                <div className="aspect-[16/10] bg-light-gray flex items-center justify-center p-8 relative overflow-hidden">
-                  <img 
-                    src={brand.logo} 
-                    alt={brand.name} 
-                    className="max-w-[120px] max-h-[60px] object-contain opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </div>
+      <section className="py-16 px-4 lg:px-16 bg-light-gray">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {brands.map((brand) => (
+            <Link 
+              key={brand.id} 
+              to={`/brand/${brand.slug}`}
+              className="group bg-white rounded-2xl p-8 border border-transparent shadow-sm hover:shadow-lg hover:border-primary-red/20 transition-all duration-300 flex flex-col items-center text-center"
+            >
+              <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 group-hover:bg-primary-red/5 transition-colors">
+                 <Building2 className="w-10 h-10 text-gray-400 group-hover:text-primary-red transition-colors" />
+                 {/* Ideally use img for logo if available, falling back to icon */}
+                 {/* <img src={brand.logo} alt={brand.name} className="w-16 h-16 object-contain" /> */} 
+              </div>
+              
+              <h2 className="text-2xl font-bold text-dark-text mb-3 group-hover:text-primary-red transition-colors">
+                {brand.name}
+              </h2>
+              
+              <p className="text-gray-text text-sm mb-6 line-clamp-2">
+                {brand.description}
+              </p>
 
-                {/* Info */}
-                <div className="p-6 text-left">
-                  <h3 className="text-lg font-bold text-dark-text mb-2 group-hover:text-primary-red transition-colors">{brand.name}</h3>
-                  <p className="text-sm text-light-text line-clamp-2 mb-4">{brand.description}</p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-text">
-                      <Package className="w-4 h-4" />
-                      <span>{productCount > 0 ? productCount : brand.productCount} sản phẩm</span>
-                    </div>
-                    <span className="text-primary-red font-bold text-xs uppercase tracking-wider flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      Xem thêm <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Trust Section */}
-      <section className="py-16 px-4 lg:px-16 bg-light-gray text-center">
-        <h2 className="text-2xl font-bold text-dark-text mb-4">Tại sao chọn chúng tôi?</h2>
-        <p className="text-light-text mb-12 max-w-xl mx-auto">Chúng tôi chỉ hợp tác với các thương hiệu đạt tiêu chuẩn chất lượng quốc tế</p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          {[
-            { val: '50+', label: 'Thương hiệu đối tác' },
-            { val: '10K+', label: 'Sản phẩm chính hãng' },
-            { val: '99%', label: 'Khách hàng hài lòng' },
-          ].map((stat, i) => (
-            <div key={i} className="bg-white p-8 rounded-2xl shadow-sm">
-              <span className="block text-4xl font-bold text-primary-red mb-2">{stat.val}</span>
-              <span className="text-sm text-gray-text uppercase tracking-widest">{stat.label}</span>
-            </div>
+              <div className="mt-auto w-full pt-6 border-t border-border-color flex justify-between items-center text-sm font-medium">
+                <span className="flex items-center gap-2 text-primary-red bg-primary-red/5 px-3 py-1 rounded-full">
+                  <Award className="w-4 h-4" />
+                  {brand.productCount} sản phẩm
+                </span>
+                <span className="flex items-center gap-1 text-light-text group-hover:translate-x-1 transition-transform">
+                  Xem chi tiết <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
+            </Link>
           ))}
         </div>
       </section>

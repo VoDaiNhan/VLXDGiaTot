@@ -1,8 +1,10 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Heart, ShoppingCart } from 'lucide-react'
+import { useCart } from '../context/CartContext'
 
 const ProductCard = ({ product }) => {
+  const { addToCart } = useCart();
   // Support both old static format and new DB format
   const id = product.id;
   const name = product.name;
@@ -42,14 +44,28 @@ const ProductCard = ({ product }) => {
         
         <div className="flex flex-col mb-4">
           <span className="text-xs text-light-text line-through h-4">
-            {originalPrice && originalPrice > salePrice ? `${originalPrice.toLocaleString()}đ${unit ? `/${unit}` : ''}` : ''}
+            {originalPrice && originalPrice > salePrice ? `${Number(originalPrice).toLocaleString('vi-VN')}đ${unit ? `/${unit}` : ''}` : ''}
           </span>
           <span className="text-lg font-bold text-primary-red">
-            {salePrice?.toLocaleString()}đ{unit ? `/${unit}` : ''}
+            {Number(salePrice).toLocaleString('vi-VN')}đ{unit ? `/${unit}` : ''}
           </span>
         </div>
 
-        <button className="mt-auto w-full h-11 border border-border-color bg-white text-gray-text rounded-lg text-xs font-semibold flex items-center justify-center gap-2 hover:bg-primary-red hover:border-primary-red hover:text-white transition-all duration-200 active:scale-95">
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            // Create normalized object for cart
+            addToCart({
+              ...product,
+              id,
+              name,
+              image,
+              salePrice,
+              originalPrice,
+              unit
+            });
+          }}
+          className="mt-auto w-full h-11 border border-border-color bg-white text-gray-text rounded-lg text-xs font-semibold flex items-center justify-center gap-2 hover:bg-primary-red hover:border-primary-red hover:text-white transition-all duration-200 active:scale-95">
           <ShoppingCart className="w-4 h-4" />
           Thêm vào giỏ
         </button>

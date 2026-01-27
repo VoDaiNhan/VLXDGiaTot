@@ -2,19 +2,86 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import ProductCard from '../components/ProductCard'
-import { products } from '../data/products'
+import sql from '../lib/db'
 import { 
   ArrowRight, Phone, ShoppingBag, Zap, 
   Package, Grid3X3, Construction, PaintBucket, 
   Mountain, Warehouse, Flame, MessageCircle, 
-  CheckCircle2 
+  CheckCircle2, Loader2
 } from 'lucide-react'
 
 const HomePage = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const slides = [
+    {
+      id: 1,
+      tag: 'Ưu đãi đặc biệt tháng này',
+      title: <>Vật Liệu Xây Dựng <br /><span className="text-primary-red">Chất Lượng Cao</span></>,
+      desc: 'Đối tác tin cậy của hàng nghìn nhà thầu và gia đình. Giao hàng nhanh - Giá cạnh tranh - Bảo hành uy tín.',
+      image: 'https://images.unsplash.com/photo-1591966815206-93ded96ee841?w=800',
+      clipPath: 'polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%)'
+    },
+    {
+      id: 2,
+      tag: 'Sản phẩm mới nhất',
+      title: <>Giải Pháp Xây Dựng <br /><span className="text-primary-red">Toàn Diện</span></>,
+      desc: 'Cung cấp đầy đủ gạch, cát, đá, xi măng và thiết bị hoàn thiện cho mọi công trình lớn nhỏ.',
+      image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800', // Construction
+      clipPath: 'polygon(0 0, 100% 0, 100% 100%, 15% 100%)'
+    },
+    {
+      id: 3,
+      tag: 'Dịch vụ chuyên nghiệp',
+      title: <>Thiết Kế & Thi Công <br /><span className="text-primary-red">Trọn Gói</span></>,
+      desc: 'Đội ngũ kỹ sư giàu kinh nghiệm, cam kết tiến độ và chất lượng công trình tuyệt đối.',
+      image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800', 
+      clipPath: 'circle(70% at 70% 50%)' 
+    }
+  ];
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await sql`SELECT * FROM products ORDER BY created_at DESC`;
+        setProducts(res);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  // Auto-slide
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Filter products by type for different sections
-  const newProducts = products.filter(p => p.isNew);
-  const saleProducts = products.filter(p => p.isSale);
-  const bestSellers = products.filter(p => p.isBestSeller);
+  // Note: DB columns are snake_case, but some logic might expect specific flags
+  // We can infer flags or just assume all are "new" if recent?
+  // Check DB columns: price, sale_price.
+  
+  const newProducts = products.slice(0, 4); // Top 4 recent
+  const saleProducts = products.filter(p => p.sale_price < p.price).slice(0, 4);
+  const bestSellers = products.slice(4, 8); // Just take next 4 for now
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-10 h-10 animate-spin text-primary-red" />
+        </div>
+      </Layout>
+    );
+  }
 
   const categories = [
     { name: 'Xi Măng', icon: Package, count: 120 },
@@ -32,46 +99,66 @@ const HomePage = () => {
     { title: 'Nhà Phố Tân Cổ Điển', loc: 'Bình Thạnh, TP.HCM', img: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600' },
   ];
 
+
+
   return (
     <Layout>
       {/* Hero Section */}
       <section className="relative h-[650px] flex items-center px-4 lg:px-16 overflow-hidden bg-[#f8f9fa]">
-        <div className="relative z-10 max-w-2xl text-left">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-red/10 text-primary-red rounded-full text-xs font-bold uppercase tracking-tight mb-6">
-            <Zap className="w-4 h-4 fill-primary-red" />
-            Ưu đãi đặc biệt tháng này
-          </div>
-          <h1 className="text-4xl lg:text-7xl font-bold leading-tight mb-6 text-dark-text">
-            Vật Liệu Xây Dựng <br />
-            <span className="text-primary-red">Chất Lượng Cao</span>
-          </h1>
-          <p className="text-lg text-gray-500 mb-10 leading-relaxed max-w-lg">
-            Đối tác tin cậy của hàng nghìn nhà thầu và gia đình. Giao hàng nhanh - Giá cạnh tranh - Bảo hành uy tín.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Link to="/products" className="btn btn--primary h-14 px-10">
-              <ShoppingBag className="w-5 h-5" /> Mua ngay
-            </Link>
-            <button className="btn btn--outline h-14 px-10">
-              <Phone className="w-5 h-5" /> Liên hệ tư vấn
-            </button>
-          </div>
-          
-          {/* Scroll Indicator (Mockup) */}
-          <div className="mt-16 flex gap-2">
-            <span className="w-8 h-2 bg-primary-red rounded-full"></span>
-            <span className="w-2 h-2 bg-gray-300 rounded-full"></span>
-            <span className="w-2 h-2 bg-gray-300 rounded-full"></span>
-          </div>
-        </div>
+        {slides.map((slide, index) => (
+          <div 
+            key={slide.id}
+            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${
+              index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+            }`}
+          >
+             <div className="container mx-auto h-full flex items-center px-4 lg:px-0">
+                <div className="relative z-10 max-w-2xl text-left pl-8 lg:pl-20">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-red/10 text-primary-red rounded-full text-xs font-bold uppercase tracking-tight mb-6 animate-fadeIn">
+                    <Zap className="w-4 h-4 fill-primary-red" />
+                    {slide.tag}
+                  </div>
+                  <h1 className="text-4xl lg:text-7xl font-bold leading-tight mb-6 text-dark-text animate-slideUp">
+                    {slide.title}
+                  </h1>
+                  <p className="text-lg text-gray-500 mb-10 leading-relaxed max-w-lg animate-slideUp delay-100">
+                    {slide.desc}
+                  </p>
+                  <div className="flex flex-wrap gap-4 animate-slideUp delay-200">
+                    <Link to="/products" className="btn btn--primary h-14 px-10">
+                      <ShoppingBag className="w-5 h-5" /> Mua ngay
+                    </Link>
+                    <button className="btn btn--outline h-14 px-10">
+                      <Phone className="w-5 h-5" /> Liên hệ tư vấn
+                    </button>
+                  </div>
+                </div>
 
-        <div className="absolute top-0 right-0 w-1/2 h-full hidden lg:block">
-          <img 
-            src="https://images.unsplash.com/photo-1591966815206-93ded96ee841?w=800" 
-            alt="Hero" 
-            className="w-full h-full object-cover clip-path-hero"
-            style={{ clipPath: 'polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%)' }}
-          />
+                <div className="absolute top-0 right-0 w-1/2 h-full hidden lg:block">
+                  <img 
+                    src={slide.image} 
+                    alt="Hero" 
+                    className="w-full h-full object-cover"
+                    style={{ clipPath: slide.clipPath }}
+                  />
+                </div>
+             </div>
+          </div>
+        ))}
+
+        {/* Dots Navigation */}
+        <div className="absolute bottom-10 left-8 lg:left-16 z-20 flex gap-2">
+          {slides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`transition-all duration-300 rounded-full ${
+                currentSlide === idx 
+                  ? 'w-8 h-2 bg-primary-red' 
+                  : 'w-2 h-2 bg-gray-300 hover:bg-primary-red/50'
+              }`}
+            />
+          ))}
         </div>
       </section>
 

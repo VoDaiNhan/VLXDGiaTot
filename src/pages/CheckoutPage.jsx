@@ -1,17 +1,23 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
-import { products } from '../data/products'
+import { useCart } from '../context/CartContext'
+import { useCurrentUser } from '../lib/auth'
+import sql from '../lib/db'
 import { 
   Home, ChevronRight, CreditCard, Banknote, Landmark, 
-  Truck, ShieldCheck, MapPin, Phone, User, FileText, ArrowRight
+  Truck, ShieldCheck, MapPin, Phone, User, FileText, ArrowRight, Loader2
 } from 'lucide-react'
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const { cartItems, subtotal, clearCart } = useCart();
+  const { user, isSignedIn } = useCurrentUser();
+  
   const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
+    name: user?.name || '',
     phone: '',
     address: '',
     city: '',
@@ -19,21 +25,73 @@ const CheckoutPage = () => {
     notes: ''
   });
 
-  // Mock cart items (same as CartPage for demo)
-  const cartItems = [
-    { ...products[0], quantity: 2 },
-    { ...products[1], quantity: 5 },
-    { ...products[3], quantity: 1 },
-  ];
+  // Update form if user loads late
+  useEffect(() => {
+    if (user?.name && !formData.name) {
+      setFormData(prev => ({ ...prev, name: user.name }));
+    }
+  }, [user]);
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.salePrice * item.quantity, 0);
   const shipping = subtotal > 500000 ? 0 : 30000;
   const total = subtotal + shipping;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // In real app, would submit order to backend
-    navigate('/order-success');
+    if (cartItems.length === 0) return;
+    
+    setIsSubmitting(true);
+    try {
+      let userId = null;
+
+      // 1. Get User ID if logged in
+      if (isSignedIn && user?.email) {
+        const userRes = await sql`SELECT id FROM users WHERE email = ${user.email}`;
+        if (userRes && userRes.length > 0) {
+          userId = userRes[0].id;
+        }
+      }
+
+      // 2. Create Order
+      const fullAddress = `${formData.address}, ${formData.district}, ${formData.city}`;
+      
+      const orderRes = await sql`
+        INSERT INTO orders (
+          user_id, total, status, 
+          shipping_name, shipping_phone, shipping_address, 
+          payment_method, notes
+        ) VALUES (
+          ${userId}, ${total}, 'pending',
+          ${formData.name}, ${formData.phone}, ${fullAddress},
+          ${paymentMethod}, ${formData.notes}
+        )
+        RETURNING id
+      `;
+      
+      const orderId = orderRes[0].id;
+
+      // 3. Create Order Items
+      for (const item of cartItems) {
+        await sql`
+          INSERT INTO order_items (
+            order_id, product_id, product_name, quantity, price
+          ) VALUES (
+            ${orderId}, ${item.id}, ${item.name}, ${item.quantity}, ${item.salePrice || item.originalPrice}
+          )
+        `;
+      }
+
+      // 4. Clear Cart
+      await clearCart();
+
+      // 5. Navigate to Success
+      navigate(`/order-success?id=${orderId}`);
+
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const paymentMethods = [
@@ -215,7 +273,7 @@ const CheckoutPage = () => {
                       <p className="text-xs text-light-text">SL: {item.quantity}</p>
                     </div>
                     <span className="text-sm font-bold text-dark-text shrink-0">
-                      {(item.salePrice * item.quantity).toLocaleString()}đ
+                      {(Number(item.salePrice) * item.quantity).toLocaleString('vi-VN')}đ
                     </span>
                   </div>
                 ))}
@@ -225,24 +283,37 @@ const CheckoutPage = () => {
               <div className="space-y-3 py-4 border-t border-border-color">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-text">Tạm tính</span>
-                  <span className="font-bold text-dark-text">{subtotal.toLocaleString()}đ</span>
+                  <span className="font-bold text-dark-text">{Number(subtotal).toLocaleString('vi-VN')}đ</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-text">Phí vận chuyển</span>
                   <span className="font-bold text-dark-text">
-                    {shipping === 0 ? <span className="text-green-600">Miễn phí</span> : `${shipping.toLocaleString()}đ`}
+                    {shipping === 0 ? <span className="text-green-600">Miễn phí</span> : `${Number(shipping).toLocaleString('vi-VN')}đ`}
                   </span>
                 </div>
               </div>
 
               <div className="flex justify-between items-center py-4 border-t border-border-color mb-6">
                 <span className="text-lg font-bold text-dark-text">Tổng cộng</span>
-                <span className="text-2xl font-bold text-primary-red">{total.toLocaleString()}đ</span>
+                <span className="text-2xl font-bold text-primary-red">{Number(total).toLocaleString('vi-VN')}đ</span>
               </div>
 
-              <button type="submit" className="btn btn--primary w-full h-14 text-base">
-                Đặt hàng
-                <ArrowRight className="w-5 h-5" />
+              <button 
+                type="submit" 
+                disabled={isSubmitting || cartItems.length === 0}
+                className="btn btn--primary w-full h-14 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  <>
+                    Đặt hàng
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </>
+                )}
               </button>
 
               {/* Trust Badges */}

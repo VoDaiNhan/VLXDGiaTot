@@ -29,9 +29,12 @@ import SearchResultsPage from './pages/SearchResultsPage'
 import SalePage from './pages/SalePage'
 import NotFoundPage from './pages/NotFoundPage'
 
+import ScrollToTop from './components/ScrollToTop'
+
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="min-h-screen bg-light-gray">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -39,13 +42,13 @@ function App() {
           <Route path="/category/:name" element={<CategoryPage />} />
           <Route path="/detail/:id" element={<ProductDetailPage />} />
           <Route path="/brands" element={<BrandsPage />} />
-          <Route path="/brand/:name" element={<BrandDetailPage />} />
+          <Route path="/brand/:slug" element={<BrandDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-success" element={<OrderSuccessPage />} />
           <Route path="/login/*" element={<LoginPage />} />
           <Route path="/register/*" element={<RegisterPage />} />
-          <Route path="/account" element={<AccountPage />} />
+          <Route path="/account/*" element={<AccountPage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/order/:id" element={<OrderDetailPage />} />
           <Route path="/projects" element={<ProjectsPage />} />

@@ -1,44 +1,69 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { Home, ChevronRight, Package, Eye, Calendar, CreditCard } from 'lucide-react'
+import { useCurrentUser } from '../lib/auth'
+import sql from '../lib/db'
 
 const OrdersPage = () => {
-  // Mock orders data
-  const orders = [
-    { 
-      id: 'VL24010001', 
-      date: '27/01/2026', 
-      status: 'delivered', 
-      statusText: 'Đã giao', 
-      total: 1250000,
-      items: 3
-    },
-    { 
-      id: 'VL24010002', 
-      date: '25/01/2026', 
-      status: 'shipping', 
-      statusText: 'Đang giao', 
-      total: 850000,
-      items: 2
-    },
-    { 
-      id: 'VL24010003', 
-      date: '20/01/2026', 
-      status: 'processing', 
-      statusText: 'Đang xử lý', 
-      total: 2100000,
-      items: 5
-    },
-    { 
-      id: 'VL24010004', 
-      date: '15/01/2026', 
-      status: 'cancelled', 
-      statusText: 'Đã hủy', 
-      total: 450000,
-      items: 1
-    },
-  ];
+  const { isSignedIn, user } = useCurrentUser();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!isSignedIn || !user?.email) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // 1. Get user ID
+        const userRes = await sql`SELECT id FROM users WHERE email = ${user.email}`;
+        if (userRes && userRes.length > 0) {
+          const userId = userRes[0].id;
+          
+          // 2. Get orders with item count
+          const ordersRes = await sql`
+            SELECT 
+              o.*,
+              COUNT(oi.id) as item_count
+            FROM orders o
+            LEFT JOIN order_items oi ON o.id = oi.order_id
+            WHERE o.user_id = ${userId}
+            GROUP BY o.id
+            ORDER BY o.created_at DESC
+          `;
+          
+          setOrders(ordersRes.map(o => ({
+            id: o.id,
+            date: new Date(o.created_at).toLocaleDateString('vi-VN'),
+            status: o.status,
+            statusText: getStatusText(o.status),
+            total: Number(o.total),
+            items: Number(o.item_count)
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [isSignedIn, user?.email]);
+
+  const getStatusText = (status) => {
+    switch(status) {
+      case 'delivered': return 'Đã giao';
+      case 'shipping': return 'Đang giao';
+      case 'processing': return 'Đang xử lý';
+      case 'cancelled': return 'Đã hủy';
+      case 'pending': return 'Chờ xử lý';
+      default: return status;
+    }
+  };
 
   const getStatusStyle = (status) => {
     switch(status) {
@@ -110,7 +135,7 @@ const OrdersPage = () => {
                 <div className="flex items-center gap-6">
                   <div className="text-right">
                     <span className="text-xs text-light-text block">Tổng tiền</span>
-                    <span className="text-lg font-bold text-primary-red">{order.total.toLocaleString()}đ</span>
+                    <span className="text-lg font-bold text-primary-red">{Number(order.total).toLocaleString('vi-VN')}đ</span>
                   </div>
                   <Link 
                     to={`/order/${order.id}`}

@@ -1,11 +1,13 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { CheckCircle2, Package, Truck, ArrowRight, Home, Copy } from 'lucide-react'
 
 const OrderSuccessPage = () => {
-  // Mock order data
-  const orderNumber = 'VL' + Date.now().toString().slice(-8);
+  const [searchParams] = useSearchParams();
+  const orderId = searchParams.get('id');
+  const orderNumber = orderId ? `VL${orderId.padStart(6, '0')}` : 'VL' + Date.now().toString().slice(-8);
+  
   const orderDate = new Date().toLocaleDateString('vi-VN', { 
     year: 'numeric', 
     month: 'long', 

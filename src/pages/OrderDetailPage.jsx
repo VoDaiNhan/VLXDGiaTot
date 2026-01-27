@@ -77,7 +77,7 @@ const OrderDetailPage = () => {
             </div>
             <div className="text-right">
               <span className="text-xs text-light-text block">Tổng thanh toán</span>
-              <span className="text-2xl font-bold text-primary-red">{order.total.toLocaleString()}đ</span>
+              <span className="text-2xl font-bold text-primary-red">{Number(order.total).toLocaleString('vi-VN')}đ</span>
             </div>
           </div>
         </div>
@@ -147,15 +147,15 @@ const OrderDetailPage = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-text">Tạm tính</span>
-                <span className="text-dark-text">{order.subtotal.toLocaleString()}đ</span>
+                <span className="text-dark-text">{Number(order.subtotal).toLocaleString('vi-VN')}đ</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-text">Phí vận chuyển</span>
-                <span className="text-dark-text">{order.shippingFee.toLocaleString()}đ</span>
+                <span className="text-dark-text">{Number(order.shippingFee).toLocaleString('vi-VN')}đ</span>
               </div>
               <div className="flex justify-between pt-3 border-t border-border-color">
                 <span className="font-bold text-dark-text">Tổng cộng</span>
-                <span className="font-bold text-primary-red">{order.total.toLocaleString()}đ</span>
+                <span className="font-bold text-primary-red">{Number(order.total).toLocaleString('vi-VN')}đ</span>
               </div>
             </div>
           </div>
@@ -191,7 +191,7 @@ const OrderDetailPage = () => {
                   <p className="text-xs text-light-text">SL: {item.quantity} {item.unit || 'cái'}</p>
                 </div>
                 <div className="text-right">
-                  <span className="font-bold text-dark-text">{(item.salePrice * item.quantity).toLocaleString()}đ</span>
+                  <span className="font-bold text-dark-text">{(Number(item.salePrice) * item.quantity).toLocaleString('vi-VN')}đ</span>
                 </div>
               </div>
             ))}

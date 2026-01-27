@@ -38,7 +38,7 @@ const LoginPage = () => {
             routing="path" 
             path="/login"
             signUpUrl="/register"
-            afterSignInUrl="/account"
+            afterSignInUrl="/"
           />
         </section>
       </Layout>

@@ -2,8 +2,10 @@ import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Building2, Search, Phone, ShoppingCart, Menu, X, Percent, User, LogOut, Package, Settings } from 'lucide-react'
 import { useCurrentUser, useAuthActions, isClerkConfigured } from '../lib/auth'
+import { useCart } from '../context/CartContext'
 
 const Header = () => {
+  const { cartCount } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -147,7 +149,9 @@ const Header = () => {
 
         <Link to="/cart" className="relative text-white/80 hover:text-white transition-colors p-2 shrink-0">
           <ShoppingCart className="w-6 h-6" />
-          <span className="absolute top-0 right-0 bg-primary-red text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-navy-blue">3</span>
+          <span className="absolute top-0 right-0 bg-primary-red text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-navy-blue">
+            {cartCount}
+          </span>
         </Link>
       </div>
 

@@ -1,37 +1,26 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
-import { products } from '../data/products'
+import { useCart } from '../context/CartContext'
 import { 
   Home, ChevronRight, Trash2, Minus, Plus, 
-  ShoppingBag, Tag, Truck, ShieldCheck, ArrowRight
+  ShoppingBag, Tag, Truck, ShieldCheck, ArrowRight, Loader2
 } from 'lucide-react'
 
 const CartPage = () => {
-  // Mock cart items (in real app, this would come from context/state management)
-  const [cartItems, setCartItems] = useState([
-    { ...products[0], quantity: 2 },
-    { ...products[1], quantity: 5 },
-    { ...products[3], quantity: 1 },
-  ]);
-
-  const updateQuantity = (id, delta) => {
-    setCartItems(items => 
-      items.map(item => 
-        item.id === id 
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
-    );
-  };
-
-  const removeItem = (id) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-  };
-
-  const subtotal = cartItems.reduce((sum, item) => sum + item.salePrice * item.quantity, 0);
+  const { cartItems, loading, updateQuantity, removeFromCart, subtotal } = useCart();
   const shipping = subtotal > 500000 ? 0 : 30000;
   const total = subtotal + shipping;
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-red" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -88,7 +77,7 @@ const CartPage = () => {
                         </Link>
                         <p className="text-xs text-light-text mt-1">{item.category}</p>
                         <button 
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeFromCart(item.id)}
                           className="flex items-center gap-1 text-xs text-light-text hover:text-primary-red mt-2 transition-colors md:hidden"
                         >
                           <Trash2 className="w-3 h-3" /> Xóa
@@ -98,7 +87,7 @@ const CartPage = () => {
 
                     {/* Unit Price */}
                     <div className="col-span-2 text-center">
-                      <span className="text-sm font-bold text-primary-red">{item.salePrice.toLocaleString()}đ</span>
+                      <span className="text-sm font-bold text-primary-red">{Number(item.salePrice).toLocaleString('vi-VN')}đ</span>
                       {item.unit && <span className="text-xs text-light-text">/{item.unit}</span>}
                     </div>
 
@@ -128,9 +117,9 @@ const CartPage = () => {
 
                     {/* Subtotal */}
                     <div className="col-span-2 text-right flex items-center justify-end gap-4">
-                      <span className="text-lg font-bold text-dark-text">{(item.salePrice * item.quantity).toLocaleString()}đ</span>
+                      <span className="text-lg font-bold text-dark-text">{(Number(item.salePrice) * item.quantity).toLocaleString('vi-VN')}đ</span>
                       <button 
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeFromCart(item.id)}
                         className="hidden md:flex w-8 h-8 items-center justify-center text-light-text hover:text-primary-red hover:bg-red-50 rounded-lg transition-all"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -171,24 +160,24 @@ const CartPage = () => {
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-text">Tạm tính ({cartItems.length} sản phẩm)</span>
-                    <span className="font-bold text-dark-text">{subtotal.toLocaleString()}đ</span>
+                    <span className="font-bold text-dark-text">{Number(subtotal).toLocaleString('vi-VN')}đ</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-text">Phí vận chuyển</span>
                     <span className="font-bold text-dark-text">
-                      {shipping === 0 ? <span className="text-green-600">Miễn phí</span> : `${shipping.toLocaleString()}đ`}
+                      {shipping === 0 ? <span className="text-green-600">Miễn phí</span> : `${Number(shipping).toLocaleString('vi-VN')}đ`}
                     </span>
                   </div>
                   {subtotal < 500000 && (
                     <p className="text-xs text-light-text bg-light-gray rounded-lg p-3">
-                      💡 Mua thêm <strong>{(500000 - subtotal).toLocaleString()}đ</strong> để được miễn phí vận chuyển!
+                      💡 Mua thêm <strong>{(500000 - Number(subtotal)).toLocaleString('vi-VN')}đ</strong> để được miễn phí vận chuyển!
                     </p>
                   )}
                 </div>
 
                 <div className="flex justify-between items-center py-4 border-t border-border-color mb-6">
                   <span className="text-lg font-bold text-dark-text">Tổng cộng</span>
-                  <span className="text-2xl font-bold text-primary-red">{total.toLocaleString()}đ</span>
+                  <span className="text-2xl font-bold text-primary-red">{Number(total).toLocaleString('vi-VN')}đ</span>
                 </div>
 
                 <Link to="/checkout" className="btn btn--primary w-full h-14 text-base">

@@ -8,8 +8,10 @@ import {
 import { products } from '../data/products'
 import ProductCard from '../components/ProductCard'
 import { Link, useParams } from 'react-router-dom'
+import { useCart } from '../context/CartContext'
 
 const ProductDetailPage = () => {
+  const { addToCart } = useCart();
   const { id } = useParams();
   const [qty, setQty] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
@@ -70,9 +72,9 @@ const ProductDetailPage = () => {
             </div>
 
             <div className="bg-light-gray p-6 rounded-xl mb-8 flex items-center gap-6">
-              <span className="text-4xl font-bold text-primary-red">{product.salePrice.toLocaleString()}đ</span>
+              <span className="text-4xl font-bold text-primary-red">{Number(product.salePrice).toLocaleString('vi-VN')}đ</span>
               {product.originalPrice && (
-                <span className="text-lg text-light-text line-through font-medium">{product.originalPrice.toLocaleString()}đ</span>
+                <span className="text-lg text-light-text line-through font-medium">{Number(product.originalPrice).toLocaleString('vi-VN')}đ</span>
               )}
               {product.badge && <span className="bg-primary-red text-white text-xs font-bold px-2 py-1 rounded">{product.badge}</span>}
             </div>
@@ -111,8 +113,11 @@ const ProductDetailPage = () => {
             </div>
 
             <div className="flex flex-wrap gap-4 mb-10">
-              <button className="btn btn--primary h-14 px-10 flex-1 sm:flex-none min-w-[200px]">
-                <ShoppingCart className="w-5 h-5" /> Mua ngay
+              <button 
+                onClick={() => addToCart(product, qty)}
+                className="btn btn--primary h-14 px-10 flex-1 sm:flex-none min-w-[200px]"
+              >
+                <ShoppingCart className="w-5 h-5" /> Thêm vào giỏ
               </button>
               <button className="btn btn--outline h-14 px-6">
                 <Heart className="w-5 h-5" />
