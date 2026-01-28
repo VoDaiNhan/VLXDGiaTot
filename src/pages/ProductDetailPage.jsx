@@ -18,6 +18,7 @@ const ProductDetailPage = () => {
   const [qty, setQty] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,28 +26,73 @@ const ProductDetailPage = () => {
       try {
         // Try to fetch from DB
         const res = await sql`SELECT * FROM products WHERE id = ${id} LIMIT 1`;
+        
         if (res && res.length > 0) {
           // Normalize DB product to the camelCase format expected by the UI
           const p = res[0];
-          setProduct({
+          
+          // Handle image URL - images is stored as array in DB
+          let imageUrl = Array.isArray(p.images) && p.images.length > 0 
+            ? p.images[0] 
+            : 'https://via.placeholder.com/400';
+          
+          const normalizedProduct = {
             ...p,
             salePrice: p.sale_price,
             originalPrice: p.price,
-            image: p.image || (p.images && p.images[0]),
+            image: imageUrl,
             isNew: p.is_new,
             isSale: p.is_sale,
-            badge: p.badge || (p.is_new ? 'Mới' : p.is_sale ? 'Sale' : null)
+            badge: p.badge || (p.is_new ? 'Mới' : p.is_sale ? 'Sale' : null),
+            category: p.category || 'Sản phẩm'
+          };
+          setProduct(normalizedProduct);
+
+          // Fetch related products from same category_id
+          const relatedRes = await sql`
+            SELECT * FROM products 
+            WHERE category_id = ${p.category_id} 
+            AND id != ${id} 
+            LIMIT 4
+          `;
+          
+          const normalizedRelated = relatedRes.map(rp => {
+            let relImageUrl = Array.isArray(rp.images) && rp.images.length > 0
+              ? rp.images[0]
+              : 'https://via.placeholder.com/400';
+            
+            return {
+              ...rp,
+              salePrice: rp.sale_price,
+              originalPrice: rp.price,
+              image: relImageUrl,
+              isNew: rp.is_new,
+              isSale: rp.is_sale,
+              badge: rp.badge || (rp.is_new ? 'Mới' : rp.is_sale ? 'Sale' : null),
+              category: rp.category || 'Sản phẩm'
+            };
           });
+          
+          setRelatedProducts(normalizedRelated);
         } else {
           // Fallback to static data if not in DB
           const staticProduct = products.find(p => p.id === parseInt(id));
           setProduct(staticProduct || products[0]);
+          // Get related products from static data
+          const related = products
+            .filter(p => p.category === (staticProduct?.category || products[0].category) && p.id !== parseInt(id))
+            .slice(0, 4);
+          setRelatedProducts(related);
         }
       } catch (error) {
         console.error('Error fetching product from DB:', error);
         // Fallback to static
         const staticProduct = products.find(p => p.id === parseInt(id));
         setProduct(staticProduct || products[0]);
+        const related = products
+          .filter(p => p.category === (staticProduct?.category || products[0].category) && p.id !== parseInt(id))
+          .slice(0, 4);
+        setRelatedProducts(related);
       } finally {
         setLoading(false);
       }
@@ -257,7 +303,11 @@ const ProductDetailPage = () => {
             SẢN PHẨM LIÊN QUAN
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {products.slice(0, 4).map(p => <ProductCard key={p.id} product={p} />)}
+            {relatedProducts.length > 0 ? (
+              relatedProducts.map(p => <ProductCard key={p.id} product={p} />)
+            ) : (
+              <p className="text-gray-500 col-span-4 text-center py-10">Không có sản phẩm liên quan</p>
+            )}
           </div>
         </section>
       </div>

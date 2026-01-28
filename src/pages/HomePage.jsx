@@ -16,6 +16,12 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeProjectTab, setActiveProjectTab] = useState('Nhà phố');
+  const [timeLeft, setTimeLeft] = useState({
+    days: '00',
+    hours: '00',
+    minutes: '00',
+    seconds: '00'
+  });
 
   const slides = [
     {
@@ -63,6 +69,33 @@ const HomePage = () => {
     const timer = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % slides.length);
     }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Sales Countdown logic
+  useEffect(() => {
+    // Set target date to 3 days from now for demo
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + 3);
+    targetDate.setHours(targetDate.getHours() + 14);
+
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = targetDate.getTime() - now;
+
+      if (distance < 0) {
+        clearInterval(timer);
+        return;
+      }
+
+      setTimeLeft({
+        days: String(Math.floor(distance / (1000 * 60 * 60 * 24))).padStart(2, '0'),
+        hours: String(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0'),
+        minutes: String(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0'),
+        seconds: String(Math.floor((distance % (1000 * 60)) / 1000)).padStart(2, '0')
+      });
+    }, 1000);
+
     return () => clearInterval(timer);
   }, []);
 
@@ -210,9 +243,14 @@ const HomePage = () => {
           </div>
           <p className="text-white/80 mb-12">Giảm giá cực sốc - Số lượng có hạn!</p>
 
-          {/* Countdown Mockup */}
+          {/* Countdown Dynamic */}
           <div className="flex justify-center gap-4 mb-20 text-white">
-            {[['02', 'Ngày'], ['14', 'Giờ'], ['32', 'Phút'], ['45', 'Giây']].map(([val, label], idx) => (
+            {[
+              [timeLeft.days, 'Ngày'], 
+              [timeLeft.hours, 'Giờ'], 
+              [timeLeft.minutes, 'Phút'], 
+              [timeLeft.seconds, 'Giây']
+            ].map(([val, label], idx) => (
               <React.Fragment key={idx}>
                 <div className="flex flex-col items-center">
                   <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-2xl font-bold mb-2">
