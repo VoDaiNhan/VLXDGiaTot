@@ -1,21 +1,60 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import ProductCard from '../components/ProductCard'
 import { products } from '../data/products'
-import { Home, ChevronRight, Search, SlidersHorizontal, X, PackageSearch } from 'lucide-react'
+import sql from '../lib/db'
+import { Home, ChevronRight, Search, SlidersHorizontal, X, PackageSearch, Loader2 } from 'lucide-react'
 
 const SearchResultsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const [searchInput, setSearchInput] = useState(query);
   const [showFilters, setShowFilters] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   
   // Filters
-  const [priceRange, setPriceRange] = useState([0, 1000000]);
+  const [priceRange, setPriceRange] = useState([0, 10000000]);
   const [selectedCategories, setSelectedCategories] = useState([]);
 
-  const categories = [...new Set(products.map(p => p.category))];
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await sql`SELECT * FROM products ORDER BY created_at DESC`;
+        
+        // Normalize products
+        const normalizedProducts = res.map(p => ({
+          ...p,
+          salePrice: p.sale_price,
+          originalPrice: p.price,
+          image: Array.isArray(p.images) && p.images.length > 0 
+            ? p.images[0] 
+            : 'https://via.placeholder.com/400',
+          isNew: p.is_new,
+          isSale: p.is_sale,
+          badge: p.badge || (p.is_new ? 'Mới' : p.is_sale ? 'Sale' : null),
+          category: p.category || 'Sản phẩm'
+        }));
+        
+        setProducts(normalizedProducts);
+        
+        // Get unique categories
+        const uniqueCategories = [...new Set(normalizedProducts.map(p => p.category))];
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        // Fallback to static data
+        setProducts(products);
+        setCategories([...new Set(products.map(p => p.category))]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, []);
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
@@ -44,6 +83,12 @@ const SearchResultsPage = () => {
 
   return (
     <Layout>
+      {loading ? (
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-10 h-10 animate-spin text-primary-red" />
+        </div>
+      ) : (
+        <>
       {/* Hero */}
       <section className="bg-navy-blue py-10 px-4 lg:px-16">
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative">
@@ -170,6 +215,8 @@ const SearchResultsPage = () => {
           </div>
         </div>
       </div>
+        </>
+      )}
     </Layout>
   )
 }

@@ -3,18 +3,60 @@ import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import ProductCard from '../components/ProductCard'
 import { products } from '../data/products'
+import sql from '../lib/db'
 import { 
   Home, ChevronRight, Percent, Clock, Zap, 
-  Gift, Tag, ArrowRight, Flame
+  Gift, Tag, ArrowRight, Flame, Loader2
 } from 'lucide-react'
 
 const SalePage = () => {
+  const [saleProducts, setSaleProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
   // Countdown timer
   const [timeLeft, setTimeLeft] = useState({
     hours: 23,
     minutes: 59,
     seconds: 59
   });
+
+  useEffect(() => {
+    const fetchSaleProducts = async () => {
+      try {
+        // Fetch products where sale_price < price (on sale)
+        const res = await sql`
+          SELECT * FROM products 
+          WHERE sale_price < price 
+          ORDER BY (price - sale_price) DESC
+        `;
+        
+        // Normalize products
+        const normalizedProducts = res.map(p => ({
+          ...p,
+          salePrice: p.sale_price,
+          originalPrice: p.price,
+          image: Array.isArray(p.images) && p.images.length > 0 
+            ? p.images[0] 
+            : 'https://via.placeholder.com/400',
+          isNew: p.is_new,
+          isSale: p.is_sale,
+          badge: p.badge || `Giảm ${Math.round((1 - p.sale_price / p.price) * 100)}%`,
+          category: p.category || 'Sản phẩm'
+        }));
+        
+        setSaleProducts(normalizedProducts);
+      } catch (error) {
+        console.error('Error fetching sale products:', error);
+        // Fallback to static data
+        const staticSaleProducts = products.filter(p => p.originalPrice > p.salePrice);
+        setSaleProducts(staticSaleProducts);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchSaleProducts();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -32,8 +74,6 @@ const SalePage = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Get sale products (those with discount)
-  const saleProducts = products.filter(p => p.originalPrice > p.salePrice);
   const flashDeals = saleProducts.slice(0, 4);
   const moreDeals = saleProducts.slice(4, 12);
 
@@ -57,6 +97,12 @@ const SalePage = () => {
 
   return (
     <Layout>
+      {loading ? (
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-10 h-10 animate-spin text-primary-red" />
+        </div>
+      ) : (
+        <>
       {/* Hero Banner */}
       <section className="bg-gradient-to-r from-primary-red to-red-600 py-12 px-4 lg:px-16 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-48 -mt-48"></div>
@@ -163,6 +209,8 @@ const SalePage = () => {
           </form>
         </div>
       </section>
+        </>
+      )}
     </Layout>
   )
 }
