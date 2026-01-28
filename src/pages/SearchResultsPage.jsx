@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import ProductCard from '../components/ProductCard'
-import { products } from '../data/products'
+import { products as staticProducts } from '../data/products'
 import sql from '../lib/db'
 import { Home, ChevronRight, Search, SlidersHorizontal, X, PackageSearch, Loader2 } from 'lucide-react'
 
@@ -41,13 +41,13 @@ const SearchResultsPage = () => {
         setProducts(normalizedProducts);
         
         // Get unique categories
-        const uniqueCategories = [...new Set(normalizedProducts.map(p => p.category))];
+        const uniqueCategories = [...new Set(normalizedProducts.map(p => p.category).filter(Boolean))];
         setCategories(uniqueCategories);
       } catch (error) {
         console.error('Error fetching products:', error);
         // Fallback to static data
-        setProducts(products);
-        setCategories([...new Set(products.map(p => p.category))]);
+        setProducts(staticProducts);
+        setCategories([...new Set(staticProducts.map(p => p.category))]);
       } finally {
         setLoading(false);
       }
@@ -59,8 +59,8 @@ const SearchResultsPage = () => {
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const matchesQuery = query === '' || 
-        p.name.toLowerCase().includes(query.toLowerCase()) ||
-        p.category.toLowerCase().includes(query.toLowerCase()) ||
+        p.name?.toLowerCase().includes(query.toLowerCase()) ||
+        p.category?.toLowerCase().includes(query.toLowerCase()) ||
         p.brand?.toLowerCase().includes(query.toLowerCase());
       
       const matchesPrice = p.salePrice >= priceRange[0] && p.salePrice <= priceRange[1];
@@ -68,7 +68,7 @@ const SearchResultsPage = () => {
       
       return matchesQuery && matchesPrice && matchesCategory;
     });
-  }, [query, priceRange, selectedCategories]);
+  }, [query, priceRange, selectedCategories, products]);
 
   const handleSearch = (e) => {
     e.preventDefault();
